@@ -1,8 +1,9 @@
 ---
-title: Docker 安装
+title: Debian 安装 Docker
 date: 2020-10-17
 tags: 
 - Docker
+- Debian
 ---
 
 ## 安装 Docker
@@ -11,49 +12,52 @@ tags:
 
 ```sh
 sudo apt update
-sudo apt install \
-  ca-certificates \
-  curl \
-  gnupg \
-  lsb-release
+sudo apt install ca-certificates curl
 ```
 
 2. 安装GPG证书
 
 ```sh
-sudo mkdir -p /etc/apt/keyrings
+sudo install -m 0755 -d /etc/apt/keyrings
 
 # 阿里云镜像
-curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
 
 # 腾讯云镜像
-curl -fsSL https://mirrors.cloud.tencent.com/docker-ce/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo curl -fsSL https://mirrors.cloud.tencent.com/docker-ce/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 ```
 
 3. 写入软件源信息
 
 ```sh
 # 阿里云镜像
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.aliyun.com/docker-ce/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://mirrors.aliyun.com/docker-ce/linux/debian/
+Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+```
 
+```sh
 # 腾讯云镜像
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.cloud.tencent.com/docker-ce/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://mirrors.cloud.tencent.com/docker-ce/linux/debian
+Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
 ```
 
 4. 安装 Docker Engine
 
 ```sh
 sudo apt update
-sudo apt install docker-ce docker-ce-cli containerd.io
-```
-5. 安装 Docker Compose
-
-```sh
-sudo apt install docker-compose-plugin
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 ## Docker 非 root 用户运行
@@ -130,4 +134,4 @@ sudo systemctl restart docker
 ```
 ## 参考资料
 
-- [Docker 官方文档](https://docs.docker.com)
+- [Install Docker Engine on Debian](https://docs.docker.com/engine/install/debian/)

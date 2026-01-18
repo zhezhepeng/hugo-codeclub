@@ -14,9 +14,9 @@ slug: caddy-wildcard-certificate
 
 ## Caddy 安装
 
-因为我们要使用 DNS API 来自动申请 HTTPS 证书，我们要安装包含对应 DNS 提供商插件的二进制文件。这里以 DNSPod 为例，在[下载页面](https://caddyserver.com/download)搜索选择 `caddy-dns/dnspod`，然后点击 `Download` 下载包含 DNSPod 插件的 Caddy 二进制文件，如下图所示。
+因为我们要使用 DNS API 来自动申请 HTTPS 证书，我们要安装包含对应 DNS 提供商插件的二进制文件。这里以 Tencent Cloud DNS (DNSPod) 为例，在[下载页面](https://caddyserver.com/download)搜索选择 `caddy-dns/tencentcloud`，然后点击 `Download` 下载包含 DNSPod 插件的 Caddy 二进制文件，如下图所示。
 
-![下载Caddy](https://s2.loli.net/2023/01/11/rLBahwK82Yv6UnA.png)
+![下载Caddy](https://s2.loli.net/2026/01/18/mcFEVautxObCyTh.png)
 
 然后需要将 Caddy 配置为系统服务，确保 Caddy 一直运行。将下载的二进制文件移动到 `$PATH` 下，例如：
 
@@ -109,19 +109,20 @@ sudo systemctl status caddy
 
 > 关于 ACME Challenge 可以查看[官方文档](https://caddyserver.com/docs/automatic-https#acme-challenges)
 
-这里我以我使用的 DNSPod 为例，在下载页面点击 DNSPod DNS 插件的名称，进入到插件的 GitHub 页面，查看相应的配置文档。DNSPod 插件需要提供 `DNSPOD_TOKEN`，其格式为 `APP_ID,APP_TOKEN`。
+这里我以我使用的 Tencent Cloud DNS (DNSPod) 为例，在下载页面点击 Tencent Cloud DNS (DNSPod) 插件的名称，进入到插件的 GitHub 页面，查看相应的配置文档。Tencent Cloud DNS (DNSPod) 插件需要提供 `TENCENTCLOUD_SECRET_ID` 和 `TENCENTCLOUD_SECRET_KEY`。
 
-进入 DNSPod 控制台，打开 `API 密钥` 页面，切换到 `DNSPod Token` 标签，点击创建密钥，输入名称，即可获取 ID 和 Token。
+进入 TENCENTCLOUD 控制台，打开 `API 密钥管理` 页面，创建新的密钥。
 
-> 注意：不是腾讯云 API 密钥
-
-![DNSPod Token](https://s2.loli.net/2023/01/12/c1B3EPzb5fUea6o.png)
+![创建密钥](https://s2.loli.net/2026/01/18/ClRVQIHhpjGe86N.png)
 
 最后在需要配置的站点的 TLS 配置中配置 DNS 插件，例如：
 
 ```Caddyfile
 tls {
-    dns dnspod {APP_ID},{APP_TOKEN}
+    dns tencentcloud {
+        secret_id {env.TENCENTCLOUD_SECRET_ID}
+        secret_key {env.TENCENTCLOUD_SECRET_KEY}
+    }
     protocols tls1.2 tls1.3
 
     ciphers TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
@@ -150,7 +151,10 @@ tls {
     encode gzip
 
     tls {
-        dns dnspod ${DNSPod_TOKEN}
+        dns tencentcloud {
+            secret_id {env.TENCENTCLOUD_SECRET_ID}
+            secret_key {env.TENCENTCLOUD_SECRET_KEY}
+        }
         protocols tls1.2 tls1.3
 
         ciphers TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
