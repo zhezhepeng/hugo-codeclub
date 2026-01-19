@@ -138,6 +138,20 @@ sudo passwd github
 sudo passwd -l github
 ```
 
+配置可以用于登录的SSH密钥
+
+```shell
+# 登录服务器，切换到 root 或具有 sudo 权限的用户
+sudo su -
+
+# 确保 authorized_keys 文件权限正确
+sudo chown github:github /home/github/.ssh/authorized_keys
+sudo chmod 600 /home/github/.ssh/authorized_keys
+sudo chmod 700 /home/github/.ssh
+
+echo YOUR_SSH_PUBLIC_KEY >> /home/github/.ssh/authorized_keys
+```
+
 然后给该用户授权用于部署静态页面的目录读写权限
 
 ```bash
