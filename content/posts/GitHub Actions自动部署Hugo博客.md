@@ -47,7 +47,7 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with: 
-          hugo-version: 'latest'
+          hugo-version: ${{ vars.HUGO_VERSION }}
           extended: true
       - name: Build
         run: hugo --gc --minify -b https://${{ secrets.HOSTNAME }}
@@ -99,9 +99,9 @@ jobs:
 ```
 使用 `rsync` 将编译的 HTML 文件同步到服务器的 `/var/www/html` 目录下。
 
-## 设置 Secrets
+## 设置 Secrets和环境变量
 
-在上面的 workflows 文件中，有几个 `${{}}` 包裹的变量，这里是为了避免泄露隐私信息，例如私钥、登录用户名等新信息，因为 GitHub 公有仓库的文件任何人都可以查看。
+在上面的 workflows 文件中，有几个 `${{}}` 包裹的变量，其中`secrets`开头的变量是为了避免泄露隐私信息，例如私钥、登录用户名等新信息，因为 GitHub 公有仓库的文件任何人都可以查看。
 
 这里使用 GitHub 提供的 Secrets 来隐藏隐私信息。在仓库的 Settings 中可以添加相应的值，运行时会替换 workflow 中的变量。
 
@@ -113,17 +113,39 @@ jobs:
 
 > 注意：Secrets 根据作用域不同有两种，分别是 `Repository secrets` 和 `Environment secrets`。`Repository secrets` 在不同环境中都生效，`Environment secrets` 只在指定的环境中生效，使用 `Environment secrets` 可以将不同分支的代码部署到不同的环境中。
 
-## 遇到的问题
 
-- GitHub Actions 部署时，因为 GitHub Actions 的服务器在境外，腾讯云会发送异地登录警告邮件，无法自动部署。需要在腾讯云[主机安全控制台](https://console.cloud.tencent.com/cwp/manage/loginLog/loginwhitelist)中为用于部署的用户创建白名单。
+而 `vars` 开头的变量是为了存储非敏感的配置数据。只有在此环境的上下文中，GitHub Actions 才能通过变量上下文访问这些变量。
 
-- 第一次部署时可能会提示以下错误，这是因为用于部署的用户没有写这个目录的权限，需要按下面的方式手动授予权限
+## 服务器配置
+
+部分Linux发行版默认没有安装`rsync`，提前安装好`rsync`
+
+```shell
+sudo apt update
+sudo apt install rsync
 ```
-rsync: [generator] chgrp "/var/www/html/." failed: Operation not permitted (1)
+
+出于安全考虑，通常会单独创建一个用于GitHub Action部署用的Linux用户。
+
+```shell
+# 创建用户 github，并设置家目录
+sudo useradd -m -s /bin/bash github
+
+# 设置密码（可选）
+sudo passwd github
+
+# 或者使用更安全的方式，不设置密码，仅通过SSH密钥访问
+sudo passwd -l github
 ```
+
+然后给该用户授权用于部署静态页面的目录读写权限
 
 ```bash
 sudo mkdir -p /var/www/html
 sudo chmod -R 755 /var/www/html/
-sudo chown -R user:group /var/www/html/   # 替换 user 和 group 为用于部署的用户名和组名
+sudo chown -R github:github /var/www/html/
 ```
+
+## 遇到的问题
+
+- GitHub Actions 部署时，因为 GitHub Actions 的服务器在境外，腾讯云会发送异地登录警告邮件，无法自动部署。需要在腾讯云[主机安全控制台](https://console.cloud.tencent.com/cwp/manage/loginLog/loginwhitelist)中为用于部署的用户创建白名单。
